@@ -1,0 +1,12 @@
+{
+	"compileOnSave": true,
+	"compilerOptions": {
+		"target": "es2018",
+		"allowSyntheticDefaultImports": true,
+		"lib": ["ES2016", "DOM", "DOM.Iterable"]
+	},
+	"include": ["./src/**/*", "index.ts"],
+	"exclude": [
+		"node_modules",
+	]
+}
