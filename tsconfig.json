@@ -2,11 +2,12 @@
 	"compileOnSave": true,
 	"compilerOptions": {
 		"target": "es2018",
+		"module": "commonjs",
 		"allowSyntheticDefaultImports": true,
-		"lib": ["ES2016", "DOM", "DOM.Iterable"]
+		"lib": ["ES2016", "DOM", "DOM.Iterable"],
+		"watch": true,
+		"outDir": "./dist",
+		"moduleResolution": "node"
 	},
 	"include": ["./src/**/*", "index.ts"],
-	"exclude": [
-		"node_modules",
-	]
 }
