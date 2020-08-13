@@ -105,6 +105,7 @@ dist
 
 # VsCode
 .vscode/
+.eslintrc.js
 
 # Cache
 cache/

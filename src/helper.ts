@@ -1,28 +1,24 @@
-import * as puppeteer from 'puppeteer';
-import { Page, Browser } from 'puppeteer';
-import * as fs from 'fs';
-import { cookies } from './constants';
-import * as path from 'path';
+import * as puppeteer from "puppeteer";
+import { Cookie, Page, Browser } from "puppeteer";
+import * as fs from "fs";
+import { cookies } from "./constants";
+import * as path from "path";
 
-export function writeCookies(data: any[]): void {
+export function writeCookies(data: Cookie[]): void {
 	if (!fs.existsSync(cookies.target)) {
 		fs.mkdirSync(path.dirname(cookies.target), { recursive: true });
 	}
 
-	data.push({
-		'modified': new Date().getTime()
-	});
-
 	fs.writeFileSync(cookies.target, JSON.stringify(data));
 }
 
-export function readCookies(): any {
+export function readCookies(): Cookie[] {
 	if (!fs.existsSync(cookies.target)) return null;
 
-	const json: any[] = JSON.parse(fs.readFileSync(cookies.target, 'utf-8'));
+	const json: Cookie[] = JSON.parse(fs.readFileSync(cookies.target, "utf-8"));
 
 	const current = new Date().getTime();
-	const modified = new Date(json.pop().modified).getTime();
+	const modified = fs.statSync(cookies.target).mtime.getTime();
 
 	// Cookie has expired
 	if (current - modified > cookies.expires) return null;
