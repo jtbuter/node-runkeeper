@@ -5,8 +5,19 @@ import * as helper from "./helper";
 dotenv.config();
 
 async function login (page: Page): Promise<void> {
+	await page.setRequestInterception(true);
+		
+	page.on("request", request => {
+		// Override headers
+		const headers = Object.assign({}, request.headers(), {
+			"sec-ch-ua": undefined,
+			"sec-ch-mobile": undefined,
+		});
+		
+		request.continue({ headers });
+	});
+	
 	await page.goto("https://runkeeper.com/login");
-
 	await page.waitForSelector("input[data-fieldid=a_email]");
 	await page.waitForSelector("input[data-fieldid=a_password]");
 
@@ -21,7 +32,7 @@ async function login (page: Page): Promise<void> {
 	await page.click("#onetrust-accept-btn-handler");
 }
 
-export default async function (page: Page): Promise<void> {
+export default async function run(page: Page): Promise<void> {
 	const cookies = helper.readCookies();
 
 	if (cookies === null) {

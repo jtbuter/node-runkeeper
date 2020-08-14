@@ -4,6 +4,8 @@ import * as fs from "fs";
 import { cookies } from "./constants";
 import * as path from "path";
 
+type CallbackFunction = (...args: any[]) => void;
+
 export function writeCookies(data: Cookie[]): void {
 	if (!fs.existsSync(cookies.target)) {
 		fs.mkdirSync(path.dirname(cookies.target), { recursive: true });
@@ -15,19 +17,17 @@ export function writeCookies(data: Cookie[]): void {
 export function readCookies(): Cookie[] {
 	if (!fs.existsSync(cookies.target)) return null;
 
-	const json: Cookie[] = JSON.parse(fs.readFileSync(cookies.target, "utf-8"));
-
 	const current = new Date().getTime();
 	const modified = fs.statSync(cookies.target).mtime.getTime();
-
+	
 	// Cookie has expired
 	if (current - modified > cookies.expires) return null;
-
-	return json;
+	
+	return JSON.parse(fs.readFileSync(cookies.target, "utf-8"));
 }
 
 export async function init(): Promise<[Browser, Page]> {
-	const browser = await puppeteer.launch({ headless: true });
+	const browser = await puppeteer.launch({ headless: false, devtools: true });
 	const page = await browser.newPage();
 
 	await page.setViewport({ width: 1280, height: 800 });
@@ -55,4 +55,16 @@ export function normalize(data: string): string {
 	}
 
 	return data;
+}
+
+export async function sleep(ms: number): Promise<void> {
+	return new Promise(r => setTimeout(r, ms));
+}
+
+export async function timeout(callback: () => Promise<any>, ms: number): Promise<any> {
+	return new Promise(function (resolve, reject) {
+		sleep(ms).then(() => reject(new Error("Function timed-out")));
+		
+		callback().then(r => resolve(r));
+	});
 }
