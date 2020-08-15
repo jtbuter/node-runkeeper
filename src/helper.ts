@@ -1,33 +1,13 @@
-import * as puppeteer from "puppeteer";
-import { Cookie, Page, Browser } from "puppeteer";
-import * as fs from "fs";
-import { cookies } from "./constants";
-import * as path from "path";
+import puppeteer from "puppeteer-extra";
+import stealth = require("puppeteer-extra-plugin-stealth");
+import { Page, Browser } from "puppeteer";
 
 type CallbackFunction = (...args: any[]) => void;
 
-export function writeCookies(data: Cookie[]): void {
-	if (!fs.existsSync(cookies.target)) {
-		fs.mkdirSync(path.dirname(cookies.target), { recursive: true });
-	}
-
-	fs.writeFileSync(cookies.target, JSON.stringify(data));
-}
-
-export function readCookies(): Cookie[] {
-	if (!fs.existsSync(cookies.target)) return null;
-
-	const current = new Date().getTime();
-	const modified = fs.statSync(cookies.target).mtime.getTime();
-	
-	// Cookie has expired
-	if (current - modified > cookies.expires) return null;
-	
-	return JSON.parse(fs.readFileSync(cookies.target, "utf-8"));
-}
-
 export async function init(): Promise<[Browser, Page]> {
-	const browser = await puppeteer.launch({ headless: false, devtools: true });
+	puppeteer.use(stealth());
+
+	const browser = await puppeteer.launch({ headless: true });
 	const page = await browser.newPage();
 
 	await page.setViewport({ width: 1280, height: 800 });
@@ -67,4 +47,17 @@ export async function timeout(callback: () => Promise<any>, ms: number): Promise
 		
 		callback().then(r => resolve(r));
 	});
+}
+
+export function parseCookies(string: string): string[] {
+	string = string.toLocaleLowerCase();
+
+	const cleaned = string.split(/httponly|secure/);
+	const parts = cleaned.map(v => {
+		const r = v.split(/(?<=^[^;]+);/).shift();
+
+		return r.split(/(?<=^\S+)\s/).pop();
+	});
+
+	return parts.filter(Boolean);
 }
