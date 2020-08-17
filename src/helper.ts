@@ -7,7 +7,7 @@ type CallbackFunction = (...args: any[]) => void;
 export async function init(): Promise<[Browser, Page]> {
 	puppeteer.use(stealth());
 
-	const browser = await puppeteer.launch({ headless: true });
+	const browser = await puppeteer.launch({ headless: false });
 	const page = await browser.newPage();
 
 	await page.setViewport({ width: 1280, height: 800 });

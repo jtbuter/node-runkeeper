@@ -3,9 +3,9 @@
 	"compilerOptions": {
 		"target": "es2018",
 		"module": "commonjs",
-		"allowSyntheticDefaultImports": true,
-		"lib": ["ES2016", "DOM", "DOM.Iterable"],
+		"lib": ["ES2018", "DOM", "DOM.Iterable"],
 		"watch": true,
+		"allowJs": true,
 		"outDir": "./dist",
 		"moduleResolution": "node"
 	},

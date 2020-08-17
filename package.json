@@ -15,7 +15,10 @@
     "dotenv": "^8.2.0",
     "js-cookie": "^2.2.1",
     "node-fetch": "^3.0.0-beta.8",
+    "node-html-parser": "^1.2.20",
     "puppeteer": "^5.2.1",
+    "puppeteer-extra": "^3.1.13",
+    "puppeteer-extra-plugin-stealth": "^2.5.0",
     "set-cookie-parser": "^2.4.6"
   },
   "devDependencies": {

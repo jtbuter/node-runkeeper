@@ -1,51 +1,127 @@
 import * as fs from "fs";
-import * as path from "path";
+import * as util from "./util";
+
+type CallbackFunction = (...args: any[]) => void;
 
 interface CookieManager {
-	cookies: Record<string, unknown>[];
-	target?: string;
+	cookies: Cookie[];
+	target: string | null;
 }
 
 class CookieManager {
-	constructor(target?: string) {
+	constructor(target: string = undefined) {
 		this.cookies = [];
-
+		this.target = null;
+		
 		if (target !== undefined) {
 			this.target = target;
 
-			this._createCookieDir();
+			// Try to read cookie file, and if it doesn't exist make one.
+			try {
+				const cookies = this.read();
 
-			fs.writeFileSync(this.target, JSON.stringify(this.cookies))
+				this.cookies = cookies;
+			} catch (error) {
+				util.write(this.target, JSON.stringify(this.cookies));
+			}
 		}
 	}
 
-	public set(name: string, value: Record<string, unknown>): void {
-		this.cookies[name] = value;
+	public empty(): boolean {
+		return this.cookies.length === 0;
 	}
 
+	/**
+	 * Set a cookie value.
+	 *
+	 * @param  {Cookie} value Cookie containing headers.
+	 */
+	public append<T>(...args: T[]): void {
+		const cookies = [...this.cookies];
+
+		for (let i = 0, l = args.length; i < l; i++) {
+			const cookie: any = args[i];
+			const index = cookies.findIndex(c => c.name === cookie.name);
+
+			if (index > -1) {
+				this.cookies[index] = cookie;
+			} else {
+				this.cookies.push(cookie);
+			}
+		}
+	}
+
+	/**
+	 * Sets an entire cookie array.
+	 *
+	 * @param  {Cookie[]} array The cookie array.
+	 */
+	public set<T>(array: T[]): void {
+		this.cookies = array as any;
+	}
+
+	/**
+	 * Saves a cookie to a target file. Throws error if no target
+	 * was specified for this instance and no target is passed to
+	 * save().
+	 *
+	 * @param  {string} target The location of the target file
+	 * @throws {error}  Errors if no target is specified.
+	 */
 	public save(target: string = null): void {
 		this.target = target ?? this.target;
 
-		this._createCookieDir();
+		if (!fs.existsSync(this.target)) throw new Error("Target not specified");
 
-		fs.writeFileSync(this.target, JSON.stringify(this.cookies));
+		util.write(this.target, JSON.stringify(this.cookies));
 	}
 
-	public read(): Record<string, unknown> {
-		if (!fs.existsSync(this.target)) return null;
-
-		return JSON.parse(fs.readFileSync(this.target, "utf-8"));
+	/**
+	 * Find a cookie matching a signature.
+	 *
+	 * @param  {CallbackFunction} filter Cookie signature definition.
+	 *
+	 * @return {Cookie}                  The cookie.
+	 */
+	public find(filter: CallbackFunction): Cookie {
+		return this.cookies.find(filter);
 	}
 
+	/**
+	 * Returns all cookies.
+	 *
+	 * @return {Cookie[]} The cookies.
+	 */
+	public all(): Cookie[] {
+		return this.cookies;
+	}
+
+	public cookie(name: string): Cookie | undefined {
+		return this.find((c: Cookie) => c.name === name);
+	}
+	
+	/**
+	 * Reads cookies from a target. Throws error if target doesn't exist.
+	 *
+	 * @return {Cookie[]} Array containing all the cookies.
+	 */
+	public read(): Cookie[] {
+		return util.read(this.target) as any;
+	}
+	
+	/**
+	 * Fetches stats about a cookie file.
+	 *
+	 * @return {Stats} The file stats.
+	 */
 	public stat(): fs.Stats {
 		return fs.statSync(this.target);
-	}
-
-	private _createCookieDir(): void {
-		if (!fs.existsSync(this.target)) {
-			fs.mkdirSync(path.dirname(this.target), { recursive: true });
-		}
 	}
 }
 
 export default CookieManager;
+export interface Cookie {
+	name: string;
+	value: string;
+	[key: string]: string
+}
