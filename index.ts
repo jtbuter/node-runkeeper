@@ -15,5 +15,5 @@ import { User } from "./src/entities";
 	
 	const user = await User.build(manager);
 
-	console.log(user.id);
+	console.log(user);
 })();

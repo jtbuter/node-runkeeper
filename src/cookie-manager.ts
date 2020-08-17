@@ -1,5 +1,5 @@
 import * as fs from "fs";
-import * as util from "./util";
+import { util } from "./util";
 
 type CallbackFunction = (...args: any[]) => void;
 
