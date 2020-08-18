@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
+import * as intl from "intl";
 
 /**
  * Returns the contents of a .json file.
@@ -32,4 +33,21 @@ export function write(target: string, data: string): void {
 	this.createDir();
 
 	fs.writeFileSync(target, data);
+}
+
+/**
+ * Converts a Javascript Date to a Runkeeper date.
+ *
+ * @param  {Date}   date The Date to convert.
+ *
+ * @return {string}      A Runkeeper date.
+ */
+export function runkeeperDate(date: Date = new Date(), format = "en-GB"): string {
+	const dateString = intl.DateTimeFormat(format, {
+		day: "numeric",
+		month: "short",
+		year: "numeric"
+	}).format(date);
+
+	return dateString.replace(/(, | )/g, "-");
 }

@@ -3,7 +3,7 @@
 	"compilerOptions": {
 		"target": "es2018",
 		"module": "commonjs",
-		"lib": ["ES2018", "DOM", "DOM.Iterable"],
+		"lib": ["ES2019", "DOM", "DOM.Iterable"],
 		"watch": true,
 		"allowJs": true,
 		"outDir": "./dist",

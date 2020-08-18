@@ -1,6 +1,6 @@
 import CookieManager from "../cookie-manager";
 import * as html from "node-html-parser";
-import { fetcher } from "../util";
+import { fetcher, util } from "../util";
 
 interface Settings {
 	weight: string;
@@ -9,17 +9,18 @@ interface Settings {
 
 interface User {
 	id: number;
-	name: string;
-	display: string;
-	weight: number;
-	bodyFat: number;
-	avatar: string;
 	url: string;
+	display: string;
+	avatar: string;
+	weight: number;
+	body_fat: number;
 	settings: Settings;
-	manager?: CookieManager;
+	started: Date;
 }
 
 class User {
+	manager: CookieManager;
+	
 	public async build(manager: CookieManager): Promise<User> {
 		this.manager = manager;
 
@@ -28,8 +29,9 @@ class User {
 		this.display = await this.getDisplayName();
 		this.avatar = await this.getAvatar();
 		this.weight = await this.getWeight();
-		this.bodyFat = await this.getBodyFat();
+		this.body_fat = await this.getBodyFat();
 		this.settings = await this.getSettings();
+		this.started = await this.getStartDate();
 
 		return this;
 	}
@@ -53,18 +55,55 @@ class User {
 	}
 
 	public async getBodyFat(): Promise<number> {
-		const { totalBoxes: { PERCENT_BODY_FAT } } = await this.fitnessReport() as any;
-		const fat = parseInt(PERCENT_BODY_FAT.value);
+		const { totalBoxes: { body_fat } } = await this.fitnessReport() as any;
+		const fat = parseInt(body_fat.value);
 
 		return !Object.is(fat, NaN) ? fat : 0;
 	}
 
+	public async getStartDate(): Promise<Date> {
+		const cookie = this.manager.cookie("checker");
+		const startDate = new Date("1-Jan-2008");
+		const endDate = new Date();
+		const reportConfig = {
+			charts: {
+				all: {
+					field: "TOTAL_DISTANCE",
+					stacked: true
+				}
+			}
+		};
+
+		const report = await fetcher.get(`/user/${this.url}/fitnessReportsData`, {
+			"headers": {
+				"content-type": "application/x-www-form-urlencoded",
+				"cookie": `${cookie.name}=${cookie.value}`
+			},
+			"body": new URLSearchParams({
+				startDate: util.runkeeperDate(startDate),
+				endDate: util.runkeeperDate(endDate),
+				timeframeOption: "CUSTOM",
+				chartTimeBuckets: "MONTH",
+				reportConfigJson: JSON.stringify(reportConfig)
+			}).toString(),
+			"method": "POST"
+		}, false);
+
+		const json = JSON.parse(report);
+
+		const { charts: { all: { series } } } = json;
+		const points = series.find((e: Record<string, unknown>) => e.maxYValue > 0).dataPointsList;
+		const epoch = points.find((c: Record<string, number>) => c.numSamples > 0).x;
+		
+		return new Date(epoch);
+	}
+
 	public async getSettings(): Promise<Settings> {
-		const { totalBoxes: { WEIGHT, TOTAL_DISTANCE } } = await this.fitnessReport() as any;
+		const { totalBoxes: { weight, distance } } = await this.fitnessReport() as any;
 
 		return {
-			weight: WEIGHT.units,
-			distance: TOTAL_DISTANCE.units
+			weight: weight.units,
+			distance: distance.units
 		};
 	}
 
@@ -75,40 +114,37 @@ class User {
 	}
 
 	public async getWeight(): Promise<number> {
-		const { totalBoxes } = await this.fitnessReport() as any;
+		const { totalBoxes: { weight } } = await this.fitnessReport() as any;
 
-		return parseInt(totalBoxes.WEIGHT.value);
+		return parseInt(weight.value);
 	}
 
 	private async fitnessReport(): Promise<unknown> {
 		const cookie = this.manager.cookie("checker");
 
 		const reportConfig = {
-			"totalBoxes": {
-				"WEIGHT": {
-					"field": "WEIGHT",
-					"showLatest": true
+			totalBoxes: {
+				weight: {
+					field: "WEIGHT",
+					showLatest: true
 				},
-				"PERCENT_BODY_FAT": {
-					"field": "PERCENT_BODY_FAT",
-					"showLatest": true
+				body_fat: {
+					field: "PERCENT_BODY_FAT",
+					showLatest: true
 				},
-				"TOTAL_DISTANCE": {
-					"field": "TOTAL_DISTANCE"
+				distance: {
+					field: "TOTAL_DISTANCE"
 				}
 			}
 		};
 
-		const report = await fetcher.get("/user/jtbuter/fitnessReportsData", {
+		const report = await fetcher.get(`/user/${this.url}/fitnessReportsData`, {
 			"headers": {
 				"content-type": "application/x-www-form-urlencoded",
 				"cookie": `${cookie.name}=${cookie.value}`
 			},
 			"body": new URLSearchParams({
-				startDate: "1-Aug-2020",
-				endDate: "1-Aug-2020",
-				timeframeOption: "CUSTOM",
-				chartTimeBuckets: "DAY",
+				timeframeOption: "LIFETIME",
 				reportConfigJson: JSON.stringify(reportConfig)
 			}).toString(),
 			"method": "POST"
@@ -130,3 +166,4 @@ class User {
 }
 
 export default new User;
+export { User };

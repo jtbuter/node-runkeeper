@@ -1,7 +1,7 @@
 import * as constants from "./src/constants";
 import CookieManager from "./src/cookie-manager";
 import login from "./src/login";
-import { User } from "./src/entities";
+import { User, ActivityList } from "./src/entities";
 
 (async () => {
 	const manager = new CookieManager(constants.cookies.target);
@@ -14,6 +14,5 @@ import { User } from "./src/entities";
 	}
 	
 	const user = await User.build(manager);
-
-	console.log(user);
+	const activities = await ActivityList.build(manager, user);
 })();

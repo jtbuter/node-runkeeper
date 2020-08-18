@@ -3,6 +3,12 @@ import { util } from "./util";
 
 type CallbackFunction = (...args: any[]) => void;
 
+interface Cookie {
+	name: string;
+	value: string;
+	[key: string]: string
+}
+
 interface CookieManager {
 	cookies: Cookie[];
 	target: string | null;
@@ -120,8 +126,6 @@ class CookieManager {
 }
 
 export default CookieManager;
-export interface Cookie {
-	name: string;
-	value: string;
-	[key: string]: string
+export {
+	CookieManager, Cookie
 }
