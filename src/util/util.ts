@@ -51,3 +51,7 @@ export function runkeeperDate(date: Date = new Date(), format = "en-GB"): string
 
 	return dateString.replace(/(, | )/g, "-");
 }
+
+export async function sleep(ms: number): Promise<void> {
+	return new Promise(r => setTimeout(r, ms));
+}

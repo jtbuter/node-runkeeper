@@ -24,9 +24,9 @@ class ActivityList {
 		this.manager = manager;
 		this.user = user;
 
-		const months = await this.getMonths();
-		const list = await Promise.all(months.map(month => this.getMonth(month)));
-		const activities = list.flat().map(a => activity.build(manager, a.activity_id));
+		const months = await this.activityMonths();
+		const list = await Promise.all(months.map(month => this.activityDateRange(month)));
+		const activities = list.flat().map(a => activity.build(manager, user, a.activity_id));
 
 		this.list = await Promise.all(activities) as any;
 
@@ -37,8 +37,9 @@ class ActivityList {
 		return this.list;
 	}
 
-	private async getMonth(date: Date): Promise<ShallowActivity[]> {
+	private async activityDateRange(date: Date): Promise<ShallowActivity[]> {
 		const cookie = this.manager.cookie("checker");
+		
 		const query = new URLSearchParams({
 			userName: this.user.url,
 			startDate: util.runkeeperDate(date, "en-US")
@@ -53,7 +54,7 @@ class ActivityList {
 		return this.processActivities(JSON.parse(res));
 	}
 
-	private async getMonths(): Promise<Date[]> {
+	private async activityMonths(): Promise<Date[]> {
 		const cookie = this.manager.cookie("checker");
 
 		const startDate = util.runkeeperDate(new Date("1-Jun-2009")); // Runkeeper release date

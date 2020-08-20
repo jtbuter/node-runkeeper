@@ -1,11 +1,13 @@
 import CookieManager from "../cookie-manager";
-import { fetcher } from "../util";
+import { fetcher, util } from "../util";
+import { User } from "./user";
+import * as html from "node-html-parser";
 
 interface Activity {
 	id: number;
 	uuid: string;
 	type: string;
-	user_id: number;
+	user: User;
 	day: number;
 	month: string;
 	year: number;
@@ -22,12 +24,36 @@ interface Activity {
 
 class Activity {
 	manager: CookieManager;
+	user: User;
 
-	public async build(manager: CookieManager, id: number): Promise<Activity> {
-		console.log(id);
+	public async build(manager: CookieManager, user: User, id: number): Promise<Activity> {
+		this.manager = manager;
+		this.user = user;
+		this.id = id;
+
+		await util.sleep(500);
 
 		return this;
 	}
+
+	private async activityRoot(id: number) {
+		const cookie = this.manager.cookie("checker");
+
+		const body = await fetcher.get(`/user/${this.user.url}/activity/${id}`, {
+			headers: {
+				cookie: `${cookie.name}=${cookie.value}`
+			}
+		});
+
+		const root = html.parse(body);
+		const meta: HTMLMetaElement = root.querySelector("[name~='twitter:app:url:iphone']") as any;
+		const uuid = meta.content.match(/tripuuid=(.*)&/).pop();
+
+		const text = document.querySelector(".activitySubTitle");
+		const time = text.textContent.match()
+	}
+
+	private async activityPoints() {}
 }
 
 export default new Activity;
