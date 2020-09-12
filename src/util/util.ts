@@ -10,7 +10,7 @@ import * as intl from "intl";
  * @return {any[]}         The parsed json.
  */
 export function read(target: string): unknown | null {
-	if (!fs.existsSync(target)) return null;
+	if (!fs.existsSync(target)) throw new Error("Target doesn't exist");
 
 	return JSON.parse(fs.readFileSync(target, "utf-8"));
 }
@@ -30,7 +30,7 @@ export function createDir(target: string): void {
  * for a valid target should be done elsewhere.
  */
 export function write(target: string, data: string): void {
-	this.createDir();
+	this.createDir(target);
 
 	fs.writeFileSync(target, data);
 }

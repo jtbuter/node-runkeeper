@@ -10,11 +10,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/mongodb": "^3.5.27",
     "cookie": "^0.4.1",
     "cookie-parser": "^1.4.5",
     "dotenv": "^8.2.0",
     "intl": "^1.2.5",
     "js-cookie": "^2.2.1",
+    "mongodb": "^3.6.2",
     "node-fetch": "^3.0.0-beta.8",
     "node-html-parser": "^1.2.20",
     "puppeteer": "^5.2.1",

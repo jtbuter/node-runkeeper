@@ -1,10 +1,9 @@
-import activity, { Activity } from "./activity";
 import { User } from "./user";
-import { CookieManager } from "../cookie-manager";
+import { manager } from "../cookie-manager";
 import { fetcher, util } from "../util";
 
 interface ActivityList {
-	list: typeof Activity[];
+	list: ShallowActivity[];
 }
 
 interface ShallowActivity {
@@ -13,32 +12,29 @@ interface ShallowActivity {
 }
 
 class ActivityList {
-	manager: CookieManager;
 	user: User;
 
 	constructor() {
 		this.list = [];
 	}
 
-	public async build(manager: CookieManager, user: User): Promise<ActivityList> {
-		this.manager = manager;
+	public async get(user: User): Promise<ActivityList> {
 		this.user = user;
 
 		const months = await this.activityMonths();
 		const list = await Promise.all(months.map(month => this.activityDateRange(month)));
-		const activities = list.flat().map(a => activity.build(manager, user, a.activity_id));
 
-		this.list = await Promise.all(activities) as any;
+		this.list = list.flat();
 
 		return this;
 	}
 
-	public getList(): typeof Activity[] {
+	public getList(): ShallowActivity[] {
 		return this.list;
 	}
 
 	private async activityDateRange(date: Date): Promise<ShallowActivity[]> {
-		const cookie = this.manager.cookie("checker");
+		const cookie = manager.cookie("checker");
 		
 		const query = new URLSearchParams({
 			userName: this.user.url,
@@ -51,11 +47,26 @@ class ActivityList {
 			}
 		}, false);
 
-		return this.processActivities(JSON.parse(res));
+		const activities = this.processActivities(JSON.parse(res));
+		
+		return activities.map(a => this.deserialize(a)).reverse();
+	}
+
+	private deserialize(shallow: ShallowActivity): ShallowActivity {
+		const activity: ShallowActivity = {
+			activity_id: shallow.activity_id,
+			date: new Date(`${shallow.dayOfMonth} ${shallow.month} ${shallow.year}`),
+			unit: shallow.distanceUnits,
+			type: shallow.mainText,
+			time: shallow.elapsedTime,
+			distance: shallow.distance
+		};
+
+		return activity;
 	}
 
 	private async activityMonths(): Promise<Date[]> {
-		const cookie = this.manager.cookie("checker");
+		const cookie = manager.cookie("checker");
 
 		const startDate = util.runkeeperDate(new Date("1-Jun-2009")); // Runkeeper release date
 		const endDate = util.runkeeperDate(new Date());
@@ -67,7 +78,7 @@ class ActivityList {
 					stacked: true
 				}
 			}
-		})
+		});
 		
 		const body = new URLSearchParams({
 			startDate: startDate,
@@ -75,7 +86,7 @@ class ActivityList {
 			timeframeOption: "CUSTOM",
 			chartTimeBuckets: "MONTH",
 			reportConfigJson: configJson
-		}).toString()
+		}).toString();
 
 		const report = await fetcher.get(`/user/${this.user.url}/fitnessReportsData`, {
 			method: "POST",

@@ -1,18 +1,31 @@
-import * as constants from "./src/constants";
-import CookieManager from "./src/cookie-manager";
-import login from "./src/login";
-import { User, ActivityList } from "./src/entities";
+import * as CookieManager from "./src/cookie-manager";
+import { User } from "./src/entities";
+import resources, { db } from "./src/util/resources";
 
 (async () => {
-	const manager = new CookieManager(constants.cookies.target);
+	await CookieManager.init();
 
-	if (manager.empty()) {
-		const cookies = await login();
+	await resources.init();
 
-		manager.set(cookies);
-		manager.save();
-	}
+	const collection = db.collection('activities');
+
+	await collection.insertOne({
+		"activity_id": 3
+	});
+
+	a
+
 	
-	const user = await User.build(manager);
-	const activities = await ActivityList.build(manager, user);
+
+	console.log(await collection.findOne({activity_id: 3}));
+	
+	// const user = await User.get("jtbuter");
+
+
+	// console.log(user);
+	
+
+	// const activities = await ActivityList.get(user);
+
+	// console.log(activities.getList());
 })();

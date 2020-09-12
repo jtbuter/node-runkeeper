@@ -49,11 +49,15 @@ class Activity {
 		const meta: HTMLMetaElement = root.querySelector("[name~='twitter:app:url:iphone']") as any;
 		const uuid = meta.content.match(/tripuuid=(.*)&/).pop();
 
-		const text = document.querySelector(".activitySubTitle");
-		const time = text.textContent.match()
+		console.log(uuid);
+		
+		// const text = document.querySelector(".activitySubTitle");
+		// const time = text.textContent.match()
 	}
 
-	private async activityPoints() {}
+	private async activityPoints() {
+		return;
+	}
 }
 
 export default new Activity;

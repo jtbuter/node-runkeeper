@@ -1,5 +1,7 @@
 import * as fs from "fs";
 import { util } from "./util";
+import * as constants from "./constants";
+import login from "./login";
 
 type CallbackFunction = (...args: any[]) => void;
 
@@ -15,11 +17,11 @@ interface CookieManager {
 }
 
 class CookieManager {
-	constructor(target: string = undefined) {
+	constructor(target: string = null) {
 		this.cookies = [];
 		this.target = null;
 		
-		if (target !== undefined) {
+		if (target !== null) {
 			this.target = target;
 
 			// Try to read cookie file, and if it doesn't exist make one.
@@ -28,9 +30,17 @@ class CookieManager {
 
 				this.cookies = cookies;
 			} catch (error) {
-				util.write(this.target, JSON.stringify(this.cookies));
+				util.write(this.target, JSON.stringify([]));
 			}
 		}
+	}
+
+	/**
+	 * Clears the CookieManager.
+	 */
+	public clear(): void {
+		this.cookies = [];
+		util.write(this.target, JSON.stringify([]));
 	}
 
 	public empty(): boolean {
@@ -125,7 +135,17 @@ class CookieManager {
 	}
 }
 
-export default CookieManager;
+const manager = new CookieManager(constants.cookies.target);
+
+const init = async function(): Promise<void> {
+	if (!manager.empty()) return;
+
+	const cookies = await login();
+
+	manager.set(cookies);
+	manager.save();
+}
+
 export {
-	CookieManager, Cookie
+	CookieManager, Cookie, manager, init
 }

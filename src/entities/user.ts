@@ -1,4 +1,4 @@
-import CookieManager from "../cookie-manager";
+import { manager } from "../cookie-manager";
 import * as html from "node-html-parser";
 import { fetcher, util } from "../util";
 
@@ -8,7 +8,6 @@ interface Settings {
 }
 
 interface User {
-	id: number;
 	url: string;
 	display: string;
 	avatar: string;
@@ -19,13 +18,8 @@ interface User {
 }
 
 class User {
-	manager: CookieManager;
-	
-	public async build(manager: CookieManager): Promise<User> {
-		this.manager = manager;
-
-		this.id = await this.getId();
-		this.url = await this.getUrl();
+	public async get(url: string): Promise<User> {
+		this.url = url;
 		this.display = await this.getDisplayName();
 		this.avatar = await this.getAvatar();
 		this.weight = await this.getWeight();
@@ -36,22 +30,16 @@ class User {
 		return this;
 	}
 
-	public async getId(): Promise<number> {
-		const root = await this.avatarWidget();
+	// public async getId(): Promise<number> {
+	// 	const root = await this.avatarWidget();
 
-		return parseInt(root.querySelector("[userId]").getAttribute("userId"));
-	}
-
-	public async getUrl(): Promise<string> {
-		const root = await this.avatarWidget();
-		
-		return root.querySelector("[userUrl]").getAttribute("userUrl");
-	}
+	// 	return parseInt(root.querySelector("[userId]").getAttribute("userId"));
+	// }
 
 	public async getAvatar(): Promise<string> {
-		const root = await this.avatarWidget();
+		const root = await this.profilePage();
 
-		return root.querySelector("img").getAttribute("src");
+		return root.querySelector(".avatar img").getAttribute("src");
 	}
 
 	public async getBodyFat(): Promise<number> {
@@ -62,7 +50,7 @@ class User {
 	}
 
 	public async getStartDate(): Promise<Date> {
-		const cookie = this.manager.cookie("checker");
+		const cookie = manager.cookie("checker");
 		const startDate = new Date("1-Jan-2008");
 		const endDate = new Date();
 		const reportConfig = {
@@ -108,9 +96,9 @@ class User {
 	}
 
 	public async getDisplayName(): Promise<string> {
-		const root = await this.avatarWidget();
+		const root = await this.profilePage();
 
-		return root.querySelector("img").getAttribute("title");
+		return root.querySelector(".userName").innerHTML;
 	}
 
 	public async getWeight(): Promise<number> {
@@ -120,7 +108,7 @@ class User {
 	}
 
 	private async fitnessReport(): Promise<unknown> {
-		const cookie = this.manager.cookie("checker");
+		const cookie = manager.cookie("checker");
 
 		const reportConfig = {
 			totalBoxes: {
@@ -153,16 +141,27 @@ class User {
 		return JSON.parse(report);
 	}
 
-	private async avatarWidget(): Promise<html.HTMLElement> {
-		const cookie = this.manager.cookie("checker");
-		const res = await fetcher.get("/settings?getAvatarWidget=", {
+	private async profilePage(): Promise<html.HTMLElement> {
+		const cookie = manager.cookie("checker");
+		const res = await fetcher.get(`/user/${this.url}`, {
 			"headers": {
-				"cookie": "checker=" + cookie.value
+				"cookie": `${cookie.name}=${cookie.value}`
 			}
 		});
 
 		return html.parse(res);
 	}
+
+	// private async avatarWidget(): Promise<html.HTMLElement> {
+	// 	const cookie = manager.cookie("checker");
+	// 	const res = await fetcher.get("/settings?getAvatarWidget=", {
+	// 		"headers": {
+	// 			"cookie": `${cookie.name}=${cookie.value}`
+	// 		}
+	// 	});
+
+	// 	return html.parse(res);
+	// }
 }
 
 export default new User;
